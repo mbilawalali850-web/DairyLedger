@@ -1,0 +1,151 @@
+{% extends 'layout.html' %}
+{% block content %}
+<style>
+    /* Custom Modal Style */
+    #customOverlay {
+        display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0,0,0,0.7); z-index: 1000; justify-content: center; align-items: center;
+    }
+    .modal-box {
+        background: white; padding: 20px; border-radius: 10px; width: 90%; max-width: 450px;
+    }
+</style>
+
+<div class="row justify-content-center">
+    <div class="col-md-9">
+        <div class="card shadow border-primary">
+            <div class="card-header bg-primary text-white d-flex justify-content-between">
+                <h4 class="mb-0">Milk Entry Panel</h4>
+                <div id="live_clock" class="fw-bold"></div>
+            </div>
+            <div class="card-body">
+                <form id="milkForm" method="POST">
+                    <input type="hidden" name="action" id="formAction" value="save">
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label>Date</label>
+                            <input type="date" name="date" id="entry_date" class="form-control" value="{{ current_date }}">
+                        </div>
+                        <div class="col-md-6">
+                            <label>Shift</label>
+                            <select name="shift" id="shift" class="form-control">
+                                <option value="Morning" {{ 'selected' if current_shift == 'Morning' }}>Morning</option>
+                                <option value="Evening" {{ 'selected' if current_shift == 'Evening' }}>Evening</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label>Registered Customer</label>
+                            <select name="customer_id" id="customer_select" class="form-control">
+                                <option value="">-- Manual Entry --</option>
+                                {% for c in customers %}
+                                <option value="{{ c.id }}">{{ c.code }} - {{ c.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label>Manual Name (If not in list)</label>
+                            <input type="text" name="manual_customer_name" id="manual_name" class="form-control" placeholder="Enter name">
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-3"><label>Liters</label><input type="number" step="0.01" id="litre" name="litre" class="form-control" oninput="calc()" required></div>
+                        <div class="col-md-3"><label>Fat</label><input type="number" step="0.1" id="fat" name="fat" class="form-control" oninput="calc()"></div>
+                        <div class="col-md-3"><label>LR</label><input type="number" step="0.1" id="lr" name="lr" class="form-control" oninput="calc()"></div>
+                        <div class="col-md-3"><label>SNF %</label><input type="number" step="0.01" id="snf" name="snf" class="form-control" oninput="calc()"></div>
+                    </div>
+
+                    <div class="row mb-4">
+                        <div class="col-md-6"><label>Rate (Manual)</label><input type="number" step="0.01" id="rate" name="rate" class="form-control" oninput="calc()" required></div>
+                        <div class="col-md-6"><label>Total Amount</label><input type="number" id="total_amount" name="total_amount" class="form-control bg-light fw-bold text-success" readonly></div>
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        <button type="button" class="btn btn-primary btn-lg" onclick="showPreview()">Review & Add Entry</button>
+                        <button type="button" class="btn btn-outline-danger" onclick="window.location.reload()">Clear Form</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="customOverlay">
+    <div class="modal-box shadow-lg">
+        <h3 class="text-primary border-bottom pb-2">Entry Review</h3>
+        <div id="previewBody" class="my-3"></div>
+        <div class="d-flex gap-2 mt-4">
+            <button class="btn btn-secondary flex-grow-1" onclick="closeOverlay()">Close (Trail)</button>
+            <button class="btn btn-success flex-grow-1" onclick="submitFinalForm()">Confirm & Save</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    function updateClock() {
+        document.getElementById('live_clock').innerText = new Date().toLocaleTimeString();
+    }
+    setInterval(updateClock, 1000); updateClock();
+
+    function calc() {
+        let l = parseFloat(document.getElementById('litre').value) || 0;
+        let r = parseFloat(document.getElementById('rate').value) || 0;
+        document.getElementById('total_amount').value = (l * r).toFixed(2);
+    }
+
+    function showPreview() {
+        let l = parseFloat(document.getElementById('litre').value) || 0;
+        if (l <= 0) { alert("Please enter Liters first!"); return; }
+
+        let f = parseFloat(document.getElementById('fat').value) || 0;
+        let lr = parseFloat(document.getElementById('lr').value) || 0;
+        let s = parseFloat(document.getElementById('snf').value) || 0;
+        let r = parseFloat(document.getElementById('rate').value) || 0;
+        
+        let kg = (l * 1.03).toFixed(2);
+        let gravity = (1 + (lr/1000)).toFixed(3);
+        let ts_milk = ((f + s) * l / 100).toFixed(2);
+        let total = (l * r).toFixed(2);
+
+        document.getElementById('previewBody').innerHTML = `
+            <table class="table table-bordered">
+                <tr><td><b>Milk (Liters):</b></td><td>${l} L</td></tr>
+                <tr><td><b>Milk (KGs):</b></td><td>${kg} kg</td></tr>
+                <tr><td><b>SNF / TS %:</b></td><td>${s}</td></tr>
+                <tr><td><b>TS Milk Qty:</b></td><td>${ts_milk}</td></tr>
+                <tr><td><b>Sp. Gravity:</b></td><td>${gravity}</td></tr>
+                <tr class="table-success"><td><b>Amount:</b></td><td><b>Rs. ${total}</b></td></tr>
+            </table>
+        `;
+        document.getElementById('customOverlay').style.display = 'flex';
+    }
+
+    function closeOverlay() { document.getElementById('customOverlay').style.display = 'none'; }
+
+    function submitFinalForm() {
+    // Save karne se pehle values ko finalize karein
+    let l = parseFloat(document.getElementById('litre').value) || 0;
+    let f = parseFloat(document.getElementById('fat').value) || 0;
+    let lr = parseFloat(document.getElementById('lr').value) || 0;
+    let r = parseFloat(document.getElementById('rate').value) || 0;
+
+    let gravity = 1 + (lr / 1000);
+    let kg = l * gravity;
+    let snf_calc = (lr / 4) + (0.21 * f) + 0.36;
+    let ts_percent = f + snf_calc;
+    let ts_milk_qty = (kg * ts_percent) / 12.5;
+    let total = ts_milk_qty * r;
+
+    // In inputs ki ID check karein ke HTML mein yahi hain
+    document.getElementById('snf').value = ts_percent.toFixed(2);
+    document.getElementById('total_amount').value = total.toFixed(2);
+
+    // Form submit karein
+    document.getElementById('milkForm').submit();
+}
+</script>
+{% endblock %}

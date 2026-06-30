@@ -1,0 +1,61 @@
+{% extends 'layout.html' %}
+{% block content %}
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Ledger: {{ customer.name }} ({{ customer.code }})</h2>
+        <button class="btn btn-secondary" onclick="window.print()">Print Bill</button>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card bg-light p-3">
+                <h5>Total Liters: <b>{{ summary.total_litre or 0 }} L</b></h5>
+                <h5>Total Amount: <b>Rs. {{ summary.total_bill or 0 }}</b></h5>
+            </div>
+        </div>
+    </div>
+
+    <div class="card p-3 mb-4 no-print shadow-sm">
+    <form class="row g-3 align-items-end">
+        <div class="col-md-4">
+            <label>Start Date</label>
+            <input type="date" name="start_date" class="form-control" value="{{ sd }}">
+        </div>
+        <div class="col-md-4">
+            <label>End Date</label>
+            <input type="date" name="end_date" class="form-control" value="{{ ed }}">
+        </div>
+        <div class="col-md-4">
+            <button type="submit" class="btn btn-primary w-100">Filter Record</button>
+        </div>
+    </form>
+</div>
+
+    <table class="table table-striped table-bordered shadow-sm">
+        <thead class="table-dark">
+            <tr>
+                <th>Date</th>
+                <th>Shift</th>
+                <th>Litre</th>
+                <th>Fat / LR</th>
+                <th>TS %</th>
+                <th>Rate</th>
+                <th>Total</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for e in entries %}
+            <tr>
+                <td>{{ e.entry_date }}</td>
+                <td>{{ e.shift }}</td>
+                <td>{{ e.litre }}</td>
+                <td>{{ e.fat }} / {{ e.lr }}</td>
+                <td>{{ e.snf }}</td>
+                <td>{{ e.rate_applied }}</td>
+                <td class="fw-bold">Rs. {{ e.total_amount }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DairyLedger - Settings</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    
+    <style>
+        /* Dark Mode Preferences Override CSS */
+        [data-bs-theme="dark"] body { background-color: #121212; color: #e0e0e0; }
+        [data-bs-theme="dark"] .card { background-color: #1e1e1e; border-color: #333; }
+        [data-bs-theme="dark"] .list-group-item { background-color: #1e1e1e; color: #e0e0e0; border-color: #333; }
+    </style>
+</head>
+<body class="bg-light">
+
+    <script>
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        document.documentElement.setAttribute('data-bs-theme', savedTheme);
+    </script>
+
+    <div class="container my-5" style="max-width: 800px;">
+        <h2 class="mb-4 d-flex align-items-center gap-2">
+            <i class="bi bi-gear-fill text-primary"></i> 
+            <span data-lang-key="settings_title">Application Settings</span>
+        </h2>
+
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="card shadow-sm">
+                    <div class="list-group list-group-flush">
+                        <a href="#profile-pane" class="list-group-item list-group-item-action active" data-bs-toggle="list">
+                            <i class="bi bi-person-circle me-2"></i> <span data-lang-key="nav_profile">Profile</span>
+                        </a>
+                        <a href="#preferences-pane" class="list-group-item list-group-item-action" data-bs-toggle="list">
+                            <i class="bi bi-sliders me-2"></i> <span data-lang-key="nav_preferences">App Preferences</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-8">
+                <div class="tab-content">
+                    
+                    <div class="tab-pane fade show active" id="profile-pane">
+                        <div class="card shadow-sm p-4">
+                            <h4 class="card-title mb-3" data-lang-key="profile_heading">My Account Information</h4>
+                            <p class="text-muted small">Aap apni profile information (Name, Email, Password) yahan se manage kar sakte hain.</p>
+                            
+                            <a href="/profile" class="btn btn-primary d-inline-flex align-items-center gap-2">
+                                <i class="bi bi-pencil-square"></i> <span data-lang-key="btn_edit_profile">Go to Profile Management Screen</span>
+                            </a>
+                        </div>
+                    </div>
+
+                    <div class="tab-pane fade" id="preferences-pane">
+                        <div class="card shadow-sm p-4">
+                            <h4 class="card-title mb-4" data-lang-key="pref_heading">Theme & Language Customization</h4>
+                            
+                            <div class="mb-4 border-bottom pb-4">
+                                <label class="form-label fw-bold d-flex align-items-center gap-2">
+                                    <i class="bi bi-palette"></i> <span data-lang-key="label_theme">Display Appearance Theme</span>
+                                </label>
+                                <div class="d-flex gap-3 mt-2">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="themeGroup" id="themeLight" value="light" checked>
+                                        <label class="form-check-label" for="themeLight" data-lang-key="theme_light">Light View Mode</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="themeGroup" id="themeDark" value="dark">
+                                        <label class="form-check-label" for="themeDark" data-lang-key="theme_dark">Dark View Mode</label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="langSelect" class="form-label fw-bold d-flex align-items-center gap-2">
+                                    <i class="bi bi-translate"></i> <span data-lang-key="label_lang">System Core Language</span>
+                                </label>
+                                <select id="langSelect" class="form-select mt-2">
+                                    <option value="en">English (Default)</option>
+                                    <option value="ur">اردو (Urdu)</option>
+                                    <option value="hi">हिंदी (Hindi)</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        // Dictionary containing basic phrase values mappings
+        const langDictionary = {
+            en: {
+                settings_title: "Application Settings",
+                nav_profile: "Profile",
+                nav_preferences: "App Preferences",
+                profile_heading: "My Account Information",
+                btn_edit_profile: "Go to Profile Management Screen",
+                pref_heading: "Theme & Language Customization",
+                label_theme: "Display Appearance Theme",
+                theme_light: "Light View Mode",
+                theme_dark: "Dark View Mode",
+                label_lang: "System Core Language"
+            },
+            ur: {
+                settings_title: "ایپلی کیشن کی ترتیبات",
+                nav_profile: "پروفائل",
+                nav_preferences: "ایپ کی ترجیحات",
+                profile_heading: "میرا اکاؤنٹ اکاؤنٹ",
+                btn_edit_profile: "پروفائل مینجمنٹ اسکرین پر جائیں",
+                pref_heading: "تھیم اور زبان کی تبدیلی",
+                label_theme: "ڈسپلے تھیم",
+                theme_light: "لائٹ موڈ",
+                theme_dark: "ڈارک موڈ",
+                label_lang: "سسٹم کی زبان"
+            },
+        };
+
+        // --- Core Theme Handler Core Execution Engine ---
+        const themeLightRadio = document.getElementById('themeLight');
+        const themeDarkRadio = document.getElementById('themeDark');
+
+        // Set radio buttons states according to active current Theme
+        if (savedTheme === 'dark') {
+            themeDarkRadio.checked = true;
+        } else {
+            themeLightRadio.checked = true;
+        }
+
+        function switchApplicationTheme(e) {
+            const targetTheme = e.target.value;
+            document.documentElement.setAttribute('data-bs-theme', targetTheme);
+            localStorage.setItem('theme', targetTheme);
+        }
+
+        themeLightRadio.addEventListener('change', switchApplicationTheme);
+        themeDarkRadio.addEventListener('change', switchApplicationTheme);
+
+
+        // --- Core Translation Handler Core Execution Engine ---
+        const langDropdownElement = document.getElementById('langSelect');
+        const activeLanguage = localStorage.getItem('language') || 'en';
+        langDropdownElement.value = activeLanguage;
+
+        function applyLanguageTranslations(langCode) {
+            const targetElements = document.querySelectorAll('[data-lang-key]');
+            targetElements.forEach(element => {
+                const translationKey = element.getAttribute('data-lang-key');
+                if (langDictionary[langCode] && langDictionary[langCode][translationKey]) {
+                    element.textContent = langDictionary[langCode][translationKey];
+                }
+            });
+            // Update document direction if Urdu is selected
+            document.body.style.direction = (langCode === 'ur') ? 'rtl' : 'ltr';
+        }
+
+        langDropdownElement.addEventListener('change', (e) => {
+            const selectedLanguage = e.target.value;
+            localStorage.setItem('language', selectedLanguage);
+            applyLanguageTranslations(selectedLanguage);
+        });
+
+        // Initialize translations on page refresh runtime load
+        applyLanguageTranslations(activeLanguage);
+    </script>
+</body>
+</html>

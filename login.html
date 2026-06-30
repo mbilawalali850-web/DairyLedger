@@ -1,0 +1,82 @@
+{% extends 'layout.html' %}
+{% block content %}
+<div class="row justify-content-center mt-5">
+    <div class="col-md-4">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white text-center">
+                <h3>Login</h3>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    <div class="mb-3">
+                        <label>Username</label>
+                        <input type="text" name="username" class="form-control form-control-lg" required>
+                    </div>
+                    <div class="mb-3">
+                        <label>Password</label>
+                        <input type="password" name="password" class="form-control form-control-lg" required>
+                    </div>
+                    <button type="submit" class="btn btn-success w-100 btn-lg">Login</button>
+                    <div class="d-grid gap-2 mt-2">
+                        <button type="button" class="btn btn-outline-primary" onclick="loginWithFingerprint()">
+                            <i class="bi bi-fingerprint"></i> Login with Fingerprint
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="https://unpkg.com/@github/webauthn-json@0.5.0/dist/browser-global/webauthn-json.browser-global.js"></script>
+
+<script>
+async function loginWithFingerprint() {
+    // Apne input field ki id ke mutabiq name check karlein (e.g., 'username' ya 'username_input')
+    const usernameField = document.querySelector('input[name="username"]') || document.getElementById('username');
+    const username = usernameField ? usernameField.value : '';
+    
+    if(!username) {
+        alert("Pehle apna Username likhein, phir fingerprint par click karein!");
+        return;
+    }
+
+    try {
+        // 1. Backend se login options (challenge) mangwayein
+        const optionsResponse = await fetch('/login-biometric-options', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ username: username })
+        });
+        
+        if (!optionsResponse.ok) {
+            const errData = await optionsResponse.json();
+            alert(errData.error || "Biometric login options nahi mil sakein.");
+            return;
+        }
+        
+        const options = await optionsResponse.json();
+
+        // 2. Browser ka Fingerprint/FaceID prompt open karein
+        const credential = await webauthnJson.get({ publicKey: options });
+
+        // 3. Biometric token verification ke liye backend par bhejein
+        const verifyResponse = await fetch('/verify-biometric-login', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(credential)
+        });
+        
+        const result = await verifyResponse.json();
+        if(result.status === 'success') {
+            // Kamiyabi par dashboard par redirect karein
+            window.location.href = result.redirect;
+        } else {
+            alert("Fingerprint match nahi hua: " + result.error);
+        }
+    } catch (error) {
+        console.error(error);
+        alert("Fingerprint verify nahi ho saka. Ya to cancel kiya gaya ya device support nahi karti.");
+    }
+}
+</script>
+{% endblock %}

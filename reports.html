@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DairyLedger - Reports Panel</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <style>
+        .report-card { background: #f8f9fa; border-left: 5px solid #0d6efd; }
+        .summary-card { background: #e3f2fd; border-left: 5px solid #198754; }
+    </style>
+</head>
+<body class="bg-light">
+
+    <div class="container my-5">
+        <h2 class="mb-4 text-dark">📊 DairyLedger Reports Panel</h2>
+        
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">📅 Daily Collection Summary</h5>
+                <form method="GET" action="/reports" class="d-flex align-items-center gap-2">
+                    <input type="date" name="date" class="form-control form-control-sm" value="{{ report_date }}" onchange="this.form.submit()">
+                </form>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <div class="p-3 border rounded report-card">
+                            <small class="text-muted text-uppercase fw-bold">Total Milk Collected</small>
+                            <h3 class="text-primary mb-0">{{ "%.2f"|format(daily['total_milk']) }} Liters</h3>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="p-3 border rounded report-card">
+                            <small class="text-muted text-uppercase fw-bold">Average Fat</small>
+                            <h3 class="text-warning mb-0">{{ "%.2f"|format(daily['avg_fat']) }}%</h3>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="p-3 border rounded report-card">
+                            <small class="text-muted text-uppercase fw-bold">Projected Payout</small>
+                            <h3 class="text-success mb-0">Rs. {{ "%.2f"|format(daily['total_value']) }}</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-dark text-white">
+                <h5 class="mb-0">🔍 Generate Customer Bill / Ledger</h5>
+            </div>
+            <div class="card-body">
+                <form method="GET" action="/reports" class="row g-3">
+                    <input type="hidden" name="date" value="{{ report_date }}">
+                    
+                    <div class="col-md-4">
+                        <label class="form-label fw-bold">Select Customer</label>
+                        <select name="customer_id" class="form-select" required>
+                            <option value="">-- Choose Customer --</option>
+                            {% for c in customers %}
+                                <option value="{{ c['id'] }}" {% if customer_id|string == c['id']|string %}selected{% endif %}>
+                                    [{{ c['code'] }}] {{ c['name'] }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label fw-bold">Start Date</label>
+                        <input type="date" name="start_date" class="form-control" value="{{ start_date }}">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label fw-bold">End Date</label>
+                        <input type="date" name="end_date" class="form-control" value="{{ end_date }}">
+                    </div>
+                    <div class="col-md-2 d-flex align-items-end">
+                        <button type="submit" class="btn btn-primary w-100">Fetch Data</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        {% if customer_id %}
+        <div class="card shadow-sm">
+            <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">📄 Bill Statement ({{ start_date }} to {{ end_date }})</h5>
+            </div>
+            <div class="card-body">
+                
+                {% if bill_summary %}
+                <div class="row g-3 mb-4">
+                    <div class="col-md-4">
+                        <div class="p-3 border rounded summary-card">
+                            <small class="text-muted text-uppercase fw-bold">Total Litres Supplied</small>
+                            <h4 class="text-success mb-0">{{ "%.2f"|format(bill_summary['total_litre']) }} L</h4>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="p-3 border rounded summary-card">
+                            <small class="text-muted text-uppercase fw-bold">Period Avg Fat</small>
+                            <h4 class="text-dark mb-0">{{ "%.2f"|format(bill_summary['avg_fat']) }}%</h4>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="p-3 border rounded summary-card">
+                            <small class="text-muted text-uppercase fw-bold">Total Bill Amount</small>
+                            <h4 class="text-primary mb-0">Rs. {{ "%.2f"|format(bill_summary['total_bill']) }}</h4>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                <div class="table-responsive">
+                    <table class="table table-bordered table-striped align-middle">
+                        <thead class="table-secondary">
+                            <tr>
+                                <th>Date</th>
+                                <th>Shift</th>
+                                <th>Litres</th>
+                                <th>Fat (%)</th>
+                                <th>CLR / SNF</th>
+                                <th>Rate/Litre</th>
+                                <th>Total Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for entry in bill_entries %}
+                            <tr>
+                                <td>{{ entry['entry_date'] }}</td>
+                                <td>
+                                    <span class="badge {% if entry['shift'] == 'Morning' %}bg-info text-dark{% else %}bg-secondary{% endif %}">
+                                        {{ entry['shift'] }}
+                                    </span>
+                                </td>
+                                <td>{{ "%.2f"|format(entry['litre']) }} L</td>
+                                <td>{{ "%.2f"|format(entry['fat']) }}%</td>
+                                <td>{{ entry['snf'] if entry['snf'] else '-' }}</td>
+                                <td>Rs. {{ entry['rate_applied'] }}</td>
+                                <td><strong>Rs. {{ "%.2f"|format(entry['total_amount']) }}</strong></td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="7" class="text-center text-muted py-3">Is select kiye gaye time block me koi record maujood nahi hai.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+            </div>
+        </div>
+        {% endif %}
+
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
